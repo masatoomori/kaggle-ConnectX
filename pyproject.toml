@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "kaggle-connectx"
+version = "0.1.0"
+description = ""
+authors = ["masatoomori"]
+readme = "README.md"
+packages = [{include = "kaggle_connectx"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
