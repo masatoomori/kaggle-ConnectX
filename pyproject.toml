@@ -8,6 +8,7 @@ packages = [{include = "kaggle_connectx"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+cookiecutter = "^2.2.3"
 
 
 [build-system]
