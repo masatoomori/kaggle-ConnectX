@@ -163,4 +163,4 @@ cython_debug/
 .DS_Store
 
 # Training Logs
-logs/
+log/
