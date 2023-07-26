@@ -33,7 +33,7 @@ class ConnectFourGym(gym.Env):
         if previous_reward == MAX_REWARD:    # エージェントがすでに勝っている場合
             return MAX_REWARD
         elif is_done:   # エージェントが負けた場合
-            return -1.  # TODO: MIN_REWARDじゃないの？
+            return -1.  # TODO: MIN_REWARDじゃないの？妥当でないアクションをするよりはマシ？
         else:
             return 1 / (self.row * self.columns)    # MAX_REWARDよりも小さい任意の値？
 
@@ -44,5 +44,5 @@ class ConnectFourGym(gym.Env):
             self.obs, reward, is_done, info = self.env.step(action)
             reward = self.update_reward(reward, is_done)
         else:
-            reward, is_done, info = MIN_REWARD, True, {}
+            reward, is_done, info = MIN_REWARD, True, {}    # 妥当なアクションでない場合は最大限の罰を与えて終了
         return np.array(self.obs['board']).reshape(1, self.row, self.columns) / 2, reward, is_done, info
