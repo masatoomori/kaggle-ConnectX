@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 
 class CustomCNN(BaseFeaturesExtractor):
-    def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 512) -> None:
+    def __init__(self, observation_space: gym.spaces.Box, features_dim: int = 768) -> None:
         super(CustomCNN, self).__init__(observation_space, features_dim)
 
         # Simple, one convolutional layer with batch normalization. Kernel of
