@@ -35,9 +35,9 @@ class ConnectFourGym(gym.Env):
         elif is_done:   # エージェントが負けた場合
             return -1.  # TODO: MIN_REWARDじゃないの？
         else:
-            return 1 / (self.row * self.columns)    # 少しずつ減らす？
+            return 1 / (self.row * self.columns)    # MAX_REWARDよりも小さい任意の値？
 
-    def step(self, action: int):
+    def step(self, action: int) -> tuple:
         # エージェントのアクションが妥当か確認
         is_valid = (self.obs['board'][action] == 0)
         if is_valid:
