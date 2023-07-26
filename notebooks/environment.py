@@ -4,6 +4,9 @@ from kaggle_environments import make, evaluate
 
 # https://github.com/Kaggle/kaggle-environments/tree/master/kaggle_environments/envs/connectx
 
+MIN_REWARD = -10.
+MAX_REWARD = 1.
+
 
 class ConnectFourGym(gym.Env):
     def __init__(self, agent2='random'):
@@ -16,7 +19,7 @@ class ConnectFourGym(gym.Env):
         self.observation_space = gym.spaces.Box(low=0, high=1, shape=(1, self.row, self.columns), dtype=np.float)
 
         # 報酬のレンジを設定
-        self.reward_range = (-10., 1.)
+        self.reward_range = (MIN_REWARD, MAX_REWARD)
         # StableBaselinesは下記が設定さていないとエラーになる
         self.space = None
         self.metadata = None
@@ -27,9 +30,19 @@ class ConnectFourGym(gym.Env):
         return np.array(self.obs['board']).reshape(1, self.row, self.columns) / 2
 
     def update_reward(self, previous_reward: float, is_done: bool) -> float:
-        if previous_reward == 1:    # エージェントがすでに勝っている場合
-            return 1.
+        if previous_reward == MAX_REWARD:    # エージェントがすでに勝っている場合
+            return MAX_REWARD
         elif is_done:   # エージェントが負けた場合
-            return -1.
+            return -1.  # TODO: MIN_REWARDじゃないの？
         else:
             return 1 / (self.row * self.columns)    # 少しずつ減らす？
+
+    def step(self, action: int):
+        # エージェントのアクションが妥当か確認
+        is_valid = (self.obs['board'][action] == 0)
+        if is_valid:
+            self.obs, reward, is_done, info = self.env.step(action)
+            reward = self.update_reward(reward, is_done)
+        else:
+            reward, is_done, info = MIN_REWARD, True, {}
+        return np.array(self.obs['board']).reshape(1, self.row, self.columns) / 2, reward, is_done, info
