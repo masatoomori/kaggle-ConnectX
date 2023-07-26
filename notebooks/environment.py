@@ -12,7 +12,7 @@ REWARD_INVALID = -10
 
 class ConnectFourGym(gym.Env):
     def __init__(self, opponent='random', switch_prob=0.5):
-        env = make("connectx", debug=True)
+        self.env = make("connectx", debug=True)
         self.switch_prob = switch_prob
         self.agents = [None, opponent]
         self.trainer = self.env.train(self.agents)
