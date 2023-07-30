@@ -24,13 +24,13 @@ class ConnectFourGym(gym.Env):
         self.board = np.zeros(self.board_template, int)
 
         # 報酬のレンジを設定
-        self.reward_range = (REWARD_LOSE, REWARD_DRAW, REWARD_WIN)
+        self.reward_range = (REWARD_INVALID, REWARD_WIN)
 
         self.action_space = gym.spaces.Discrete(config.columns)
         self.observation_space = gym.spaces.Box(
             # lowとhighの間の値をとる
             low=0,
-            high=1,
+            high=2,
             shape=self.board_template,
             dtype=int
         )
