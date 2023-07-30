@@ -35,8 +35,7 @@ class CustomCNN(BaseFeaturesExtractor):
             nn.ReLU()
         )
 
-    def forward(self, x):
-        x = self.cnn(x)
-        x = self.linear(x)
-
-        return x
+    def forward(self, x: th.Tensor) -> th.Tensor:
+        x1 = self.cnn(x)
+        x2 = self.linear(x1)
+        return x2
