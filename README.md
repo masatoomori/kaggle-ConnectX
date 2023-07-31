@@ -2,7 +2,8 @@
 
 ## チュートリアル
 
-https://www.kaggle.com/code/mhyodo/connectx-with-deep-q-learning-ver
+- https://www.kaggle.com/code/toshikazuwatanabe/connect4-make-submission-with-stable-baselines3
+- https://www.kaggle.com/code/salmtcat/ppo-vs-a2c-vs-dqn-and-mlppolicy-vs-cnnpolicy
 
 ## Project Organization
 
