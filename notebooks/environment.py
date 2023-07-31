@@ -9,6 +9,8 @@ REWARD_LOSE = -1
 REWARD_DRAW = 0
 REWARD_INVALID = -10
 
+RANDOM_SEED = 0
+
 
 class ConnectFourGym(gym.Env):
     def __init__(self, opponent='random', switch_prob=0.5):
@@ -70,7 +72,7 @@ class ConnectFourGym(gym.Env):
             reward, is_done, info = REWARD_INVALID, True, {}    # 妥当なアクションでない場合は最大限の罰を与えて終了
         return self.board, reward, is_done, info
 
-    def reset(self):
+    def reset(self, seed=RANDOM_SEED):
         if np.random.random() < self.switch_prob:
             self.switch_starting_positions()
 
