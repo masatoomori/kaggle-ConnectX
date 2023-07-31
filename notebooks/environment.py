@@ -6,7 +6,6 @@ from kaggle_environments import make, evaluate
 
 REWARD_WIN = 1
 REWARD_LOSE = -1
-REWARD_DRAW = 0
 REWARD_INVALID = -10
 
 RANDOM_SEED = 0
@@ -19,16 +18,15 @@ class ConnectFourGym(gym.Env):
         self.agents = [None, opponent]
         self.trainer = self.env.train(self.agents)
 
-        config = self.env.configuration
+        self.config = self.env.configuration
         # PyTorch Conv2d expect 4 dimensional data
         # (nSamples x nChannels x Height x Width)
-        self.board_template = (1, config.rows, config.columns)
-        self.board = np.zeros(self.board_template, int)
+        self.board_template = (1, self.config.rows, self.config.columns)
 
         # 報酬のレンジを設定
         self.reward_range = (REWARD_INVALID, REWARD_WIN)
 
-        self.action_space = gym.spaces.Discrete(config.columns)
+        self.action_space = gym.spaces.Discrete(self.config.columns)
         self.observation_space = gym.spaces.Box(
             # lowとhighの間の値をとる
             low=0,
@@ -55,29 +53,30 @@ class ConnectFourGym(gym.Env):
         self.agents = self.agents[::-1]
         self.trainer = self.env.train(self.agents)
 
-    def step(self, action):
-        # エージェントのアクションが妥当か確認
-        # ゲームボードself.boardは3次元のNumPy配列で、次のような形をしています
-        # self.board: shape(1, rows, columns)
-        # 値は下記の通りなので、アクションを取ろうとしているカラムの一番上が空のセルだったらOKという意味
-        # 0: 空のセル
-        # 1: プレイヤー1のコマ
-        # 2: プレイヤー2（もしくは相手のコマ）
-        is_valid = (self.board[0][0][int(action)] == 0)
-
-        if is_valid:
-            observation, reward, is_done, info = self.trainer.step(int(action))
-            self.board = np.array(observation['board']).reshape(self.board_template)
-        else:
-            reward, is_done, info = REWARD_INVALID, True, {}    # 妥当なアクションでない場合は最大限の罰を与えて終了
-        return self.board, reward, is_done, info
-
     def reset(self, seed=RANDOM_SEED):
         if np.random.random() < self.switch_prob:
             self.switch_starting_positions()
 
-        self.board = np.array(
-            self.trainer.reset()['board']
-        ).reshape(self.board_template)
+        self.observation = self.trainer.reset()
+        self.board = np.array(self.observation['board']).reshape(self.board_template)
+        return self.board, {}
 
-        return self.board
+    def update_reward(self, prev_reward, is_done):
+        if prev_reward == REWARD_WIN:
+            return REWARD_WIN
+        elif is_done:
+            return REWARD_LOSE
+        else:
+            return 1 / (self.config.rows * self.config.columns)
+
+    def step(self, action):
+        is_valid = (self.observation['board'][int(action)] == 0)
+
+        if is_valid:
+            self.observation, reward, is_done, info = self.trainer.step(int(action))
+            reward = self.update_reward(reward, is_done)
+        else:
+            reward, is_done, info = REWARD_INVALID, True, {}    # 妥当なアクションでない場合は最大限の罰を与えて終了
+        terminated = truncated = is_done
+        self.board = np.array(self.observation['board']).reshape(self.board_template)
+        return self.board, reward, terminated, truncated, info
