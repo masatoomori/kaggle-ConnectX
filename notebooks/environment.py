@@ -18,7 +18,10 @@ class ConnectFourGym(gym.Env):
         self.agents = [None, opponent]
         self.trainer = self.env.train(self.agents)
 
-        self.config = self.env.configuration
+        config = self.env.configuration
+        self.action_space = gym.spaces.Discrete(config.columns)
+        self.observation_space = gym.spaces.Discrete(config.columns * config.rows)
+
         # PyTorch Conv2d expect 4 dimensional data
         # (nSamples x nChannels x Height x Width)
         self.board_template = (1, self.config.rows, self.config.columns)
@@ -26,16 +29,7 @@ class ConnectFourGym(gym.Env):
         # 報酬のレンジを設定
         self.reward_range = (REWARD_INVALID, REWARD_WIN)
 
-        self.action_space = gym.spaces.Discrete(self.config.columns)
-        self.observation_space = gym.spaces.Box(
-            # lowとhighの間の値をとる
-            low=0,
-            high=2,
-            shape=self.board_template,
-            dtype=int
-        )
-
-    def switch_starting_positions(self):
+    def switch_trainer(self):
         """
         ゲームの開始位置を交換するためのメソッドです。
         このメソッドを呼び出すことで、エージェント（プレイヤー）の開始位置が反転されます。
@@ -64,7 +58,7 @@ class ConnectFourGym(gym.Env):
         具体的なメソッド名はエージェントの実装に依存します。
         """
         if np.random.random() < self.switch_prob:
-            self.switch_starting_positions()
+            self.switch_trainer()
 
         # ConnectXゲームのケースでは、self.observationは以下のような情報を持つ辞書型のデータになります。
         # 'board': 現在のゲームボードの状態を表す1次元のリストです。
@@ -74,17 +68,7 @@ class ConnectFourGym(gym.Env):
         # 'mark':  現在のエージェントのマーク（ピース）を表す数字で、1または2のいずれかです。
         #          そのため、self.observation['board']は現在のゲームボードの状態を、self.observation['mark']はエージェントのマーク（ピース）を取得します。
         # このself.observationは、エージェントが環境の状態を理解し、次にどのようなアクションを取るべきかを決定するための重要な情報源となります。
-        self.observation = self.trainer.reset()
-        self.board = np.array(self.observation['board']).reshape(self.board_template)
-        return self.board, {}
-
-    def update_reward(self, prev_reward, done):
-        if prev_reward == REWARD_WIN:
-            return REWARD_WIN
-        elif done:
-            return REWARD_LOSE
-        else:
-            return 1 / (self.config.rows * self.config.columns)
+        return self.trainer.reset()
 
     def step(self, action):
         """
@@ -100,29 +84,7 @@ class ConnectFourGym(gym.Env):
         これらの戻り値は、通常は強化学習エージェントのstepメソッドやactメソッドなど、次の行動を選択するメソッドの入力として使われます。
         これらのメソッドはエージェントごとに異なる可能性がありますので、具体的なメソッド名はエージェントの実装に依存します。
         """
-        is_valid = (self.observation['board'][int(action)] == 0)
+        return self.trainer.step(action)
 
-        if is_valid:
-            # self.trainer.step(int(action))メソッドは、KaggleのConnectX環境でエージェントが指定した行動を実行し、その結果を取得するために使われます。
-            # 引数：          このメソッドは一つの引数、すなわちint(action)を必要とします。
-            #                これはエージェントが選択した行動を表します。
-            #                この行動は整数で表され、ConnectXゲームにおいては、エージェントがコマを置く列を表します。
-            #                この引数は整数として与えられるため、int(action)としている部分は、行動が整数であることを明示的に保証しています。
-            # 実行と結果の取得：self.trainer.step(int(action))は、エージェントが選択した行動をゲーム環境に適用します。
-            #                具体的には、エージェントが選択した列にコマを落とす行動を実行します。
-            # 戻り値：        このメソッドは次の4つの値を返します：
-            # 新しい観測：     エージェントが行動を取った結果としての新しいゲーム状態です。
-            # 報酬：          エージェントが取った行動の結果として得られる報酬です。
-            # 終了フラグ：     ゲームが終了したかどうかを表すブール値です。
-            #                例えば、エージェントまたは対戦相手が勝利した場合、または盤面がすべて埋まった場合などにTrueとなります。
-            # 情報：          デバッグや診断に有用な追加情報を含む辞書です。
-            #                具体的な内容は環境に依存します。
-            # これらの値は、self.observation, reward, done, info = self.trainer.step(int(action))の行によってそれぞれの変数に保存され、後続の処理で利用されます。
-            self.observation, reward, done, info = self.trainer.step(int(action))
-            reward = self.update_reward(reward, done)
-        else:
-            reward, done, info = REWARD_INVALID, True, {}    # 妥当なアクションでない場合は最大限の罰を与えて終了
-
-        terminated = truncated = done
-        self.board = np.array(self.observation['board']).reshape(self.board_template)
-        return self.board, reward, terminated, truncated, info
+    def render(self, **kwargs):
+        return self.env.render(**kwargs)
