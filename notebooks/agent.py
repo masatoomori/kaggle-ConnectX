@@ -67,3 +67,34 @@ class DQN:
                 if state.board[i] != 0:
                     prediction[i] = -1e7
             return int(np.argmax(prediction))
+
+    def add_experience(self, exp):
+        if len(self.experience['s']) >= self.max_experiences:
+            for key in self.experience.keys():
+                self.experience[key].pop(0)
+        for (key, value) in exp.items():
+            self.experience[key].append(value)
+
+    def copy_weights(self, TrainNet):
+        variables1 = self.model.trainable_variables
+        variables2 = TrainNet.model.trainable_variables
+        for (v1, v2) in zip(variables1, variables2):
+            v1.assign(v2.numpy())
+
+    def save_weights(self, path):
+        self.model.save_weights(path)
+
+    def load_weights(self, path):
+        ref_model = tf.keras.Sequential()
+
+        ref_model.add(self.model.input_layer)
+        for layer in self.model.hidden_layers:
+            ref_model.add(layer)
+        ref_model.add(self.model.output_layer)
+
+        ref_model.load_weights(path)
+
+    def preprocess(self, state):
+        result = state.board[:]
+        result.append(state.mark)
+        return result
