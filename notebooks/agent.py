@@ -47,12 +47,14 @@ class DQN:
         states_next = np.asarray([self.preprocess(self.experience['s2'][i]) for i in ids])
         dones = np.asarray([self.experience['done'][i] for i in ids])
         value_next = np.max(TargetNet.predict(states_next), axis=1)  # 次の状態で得られる価値の最大値
-        actual_values = np.where(dones, rewards, rewards + self.gamma * value_next)  # 教師信号
+
+        # 教師データ。次の状態が終了状態の場合は即時報酬のみを考慮し、終了状態でない場合は次の状態での即時報酬と未来の報酬（割引されたアクション価値）を考慮
+        actual_values = np.where(dones, rewards, rewards + self.gamma * value_next)
 
         with tf.GradientTape() as tape:
             selected_action_values = tf.math.reduce_sum(
                 self.predict(states) * tf.one_hot(actions, self.num_actions), axis=1)
-            loss = tf.math.reduce_sum(tf.square(actual_values - selected_action_values))
+            loss = tf.math.reduce_sum(tf.square(actual_values - selected_action_values))    # 損失は実際の価値と予測された価値の間の平均二乗誤差
 
         variables = self.model.trainable_variables  # 学習可能な変数のリスト
         gradients = tape.gradient(loss, variables)
